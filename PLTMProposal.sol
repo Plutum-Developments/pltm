@@ -82,7 +82,7 @@ contract PLTMProposal is ERC721Full{
 			proposal.yesVotes = proposal.depositVotes;
 			proposal.depositVotes = 0;
 			//THere are 604800 seconds in a week
-			endTime = now + 604800
+			endTime = now + 604800;
 		}
 
 		return true;
@@ -92,7 +92,7 @@ contract PLTMProposal is ERC721Full{
 	function vote(uint _numVotes, uint _id, uint _decision) public returns (bool success) {
 		//Grabs proposal of said ID
 		var proposal = _proposals[_id];
-		//Requires proposal to be active
+		//Requires proposal to be active;
 		require(proposal.active);
 		//Requires that the user can spend enough votes.
 		require(_numVotes <= tokens.balanceOfVote(msg.sender) - proposal.votesSpent[msg.sender]);
@@ -160,7 +160,7 @@ contract PLTMProposal is ERC721Full{
 		var proposal = _proposals[_id];
 		proposal.active = false;
 		if(yesVotes >= 0.2 * (total - abstains) && yesVotes > noVotes) {
-			return true
+			return true;
 		} else {
 			return false;
 		}
