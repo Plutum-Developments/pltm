@@ -104,8 +104,8 @@ contract PLTMToken{
 		balancesVote[msg.sender] -= _value;
 		balancesVote[_to] += _value;
 		for(uint i = 0; i < IDs.length; i++){
-			reduceVotes(msg.sender, i);
-			addVotes(_to, i);
+		    changeVotes(balancesVote[msg.sender], i, msg.sender);
+		    changeVotes(balancesVote[_to], i, _to);
 		}
 
 		//Transfer event triggers
@@ -148,8 +148,8 @@ contract PLTMToken{
 		allowancesVote[_from][_to] -= _value;
 		balancesVote[_to] += _value;
 		for(uint i = 0; i < IDs.length; i++){
-			reduceVotes(_from, i);
-			addVotes(_to, i);
+		    changeVotes(balancesVote[_from], i, _from);
+            changeVotes(balancesVote[_to], i, _to);
 		}
 
 		//Transfer event triggers
@@ -181,8 +181,8 @@ contract PLTMToken{
 		balancesVote[msg.sender] -= _value;
 		balancesVote[_spender] += _value;
 		for(uint i = 0; i < IDs.length; i++){
-			reduceVotes(msg.sender, i);
-			addVotes(msg.sender, i);
+			changeVotes(balancesVote[msg.sender], i, msg.sender);
+			changeVotes(balancesVote[_spender], i, _spender);
 		}
 
 		//Approval event triggers
@@ -192,6 +192,7 @@ contract PLTMToken{
 		return true;
 	}
 
+    //Returns how many votes a certain user has
 	function balanceOfVote(address _owner) public view returns (uint256 balance) {
 		return balancesVote[_owner];
 	}
@@ -223,7 +224,7 @@ contract PLTMToken{
 		//Requires the the proposal is on deposit mode
 		require(!proposal.deposit);
 		//Requires that the user can spend enough votes.
-		require(_numVotes <= balanceOfVote(msg.sender) - proposal.votesSpent[msg.sender]);
+		require(proposal.votesSpent[msg.sender] == 0);
 
 		proposal.depositVotes += _numVotes;
 		proposal.votesSpent[msg.sender] += _numVotes;
@@ -243,19 +244,19 @@ contract PLTMToken{
 	
 	//Add normal votes to the proposal.
 	//if _decision = 1, vote yes, if 2, vote no, if 0 abstain
-	function vote(uint _numVotes, uint _id, uint _decision) public returns (bool success) {
+	function vote(uint _numVotes, uint _id, uint _decision, address _address) public returns (bool success) {
 		//Grabs proposal of said ID
 		ProposalData storage proposal = _proposals[_id];
 		//Requires proposal to be active;
 		require(proposal.active);
 		//Requires that the user can spend enough votes.
-		require(_numVotes <= balanceOfVote(msg.sender) - proposal.votesSpent[msg.sender]);
+		require(proposal.votesSpent[_address] == 0);
 
 		//Require that the address is voting for the same decision (i.e. they're still voting yes/no/abstain)
-		require(getAddressDecision(msg.sender, _id) == 4 || getAddressDecision(msg.sender, _id) == _decision);
+		require(getAddressDecision(_address, _id) == 4 || getAddressDecision(_address, _id) == _decision);
 
-		if(getAddressDecision(msg.sender, _id) == 4) {
-			proposal.decision[msg.sender] = _decision;
+		if(getAddressDecision(_address, _id) == 4) {
+			proposal.decision[_address] = _decision;
 		}
 
 		if(_decision == 1){
@@ -271,11 +272,11 @@ contract PLTMToken{
 	}
 
 	//Call this function when a user's amount of available votes goes down
-	function reduceVotes(address _address, uint _id) public {
+	/*function reduceVotes(address _address, uint _id) public {
 		ProposalData storage proposal = _proposals[_id];
 		require(proposal.active);
 		if(proposal.votesSpent[_address] > balances[_address]) {
-			uint difference = proposal.votesSpent[_address] - balances[_address];
+			uint difference = proposal.votesSpent[_address] - balancesVote[_address];
 			if(!proposal.deposit) {
 				proposal.depositVotes -= difference;
 			} else {
@@ -308,8 +309,9 @@ contract PLTMToken{
 				}
 			}
 		}
-	}
+	}*/
 
+    //Closes the proposal
 	function close(uint _id) public returns (bool success) {
 		ProposalData storage proposal = _proposals[_id];
 		proposal.active = false;
@@ -321,7 +323,7 @@ contract PLTMToken{
 	}
 
 	//return 0 is abstain, 1 is yes, 2 is no, 3 is no vote yet
-	function getAddressDecision(address _address, uint _id) public returns (uint success) {
+	function getAddressDecision(address _address, uint _id) public view returns (uint success) {
 		ProposalData storage proposal = _proposals[_id];
 		if(proposal.votesSpent[_address] > 0) {
 			return proposal.decision[_address];
@@ -330,48 +332,55 @@ contract PLTMToken{
 		}
 	}
 
-	function getAddressVotes(address _address, uint _id) public returns (uint success) {
+	function getAddressVotes(address _address, uint _id) public view returns (uint success) {
 		ProposalData storage proposal = _proposals[_id];
 		return proposal.votesSpent[_address];
 	}
 
-	function getYesVotes(uint _id) public returns (uint success) {
+	function getYesVotes(uint _id) public view returns (uint success) {
 		ProposalData storage proposal = _proposals[_id];
 		return proposal.yesVotes;
 	}
 
-	function getNoVotes(uint _id) public returns (uint success) {
+	function getNoVotes(uint _id) public view returns (uint success) {
 		ProposalData storage proposal = _proposals[_id];
 		return proposal.noVotes;
 	}
 
-	function getAbstains(uint _id) public returns (uint success) {
+	function getAbstains(uint _id) public view returns (uint success) {
 		ProposalData storage proposal = _proposals[_id];
 		return proposal.abstains;
 	}
 
-	function getMessage(uint _id) public returns (string memory) {
+	function getMessage(uint _id) public view returns (string memory) {
 		ProposalData storage proposal = _proposals[_id];
 		return proposal.message;
 	}
 
 	//Just remove all of your votes
-	function revokeVotes(uint _numVotes, uint _id) public returns (bool success) {
+	function revokeVotes(uint _numVotes, uint _id, address _address) public returns (bool success) {
 		ProposalData storage proposal = _proposals[_id];
 		require(proposal.active);
-		require(_numVotes == proposal.votesSpent[msg.sender]);
-		if(proposal.decision[msg.sender] == 1){
+		require(_numVotes == proposal.votesSpent[_address]);
+		if(proposal.decision[_address] == 1){
 			proposal.yesVotes -= _numVotes;
-		} else if (proposal.decision[msg.sender] == 2) {
+		} else if (proposal.decision[_address] == 2) {
 			proposal.noVotes -= _numVotes;
 		} else {
 			proposal.abstains -= _numVotes;
 		}
-		proposal.votesSpent[msg.sender] = 0;
+		proposal.votesSpent[_address] = 0;
 		return true;
 	}
+	
+	function changeVotes(uint _numVotes, uint _id, address _address) public {
+	    ProposalData storage proposal = _proposals[_id];
+	    require(proposal.active);
+	    revokeVotes(_numVotes, _id, _address);
+	    vote(_numVotes, _id, proposal.decision[_address], _address);
+	}
 
-	function getTotalIDs() public returns (uint success) {
+	function getTotalIDs() public view returns (uint success) {
 		return IDs.length;
 	}
 
