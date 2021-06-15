@@ -207,7 +207,7 @@ contract PLTMToken{
 		IDs.push(_id);
 
 		//Defines proposal for said id
-		ProposalData memory proposal = _proposals[_id];
+		ProposalData storage proposal = _proposals[_id];
 		proposal.message = _proposal;
 		proposal.deposit = false;
 		proposal.depositVotes = 0;
@@ -333,27 +333,27 @@ contract PLTMToken{
 	}
 
 	function getAddressVotes(address _address, uint _id) public view returns (uint success) {
-		ProposalData storage proposal = _proposals[_id];
+		ProposalData memory proposal = _proposals[_id];
 		return proposal.votesSpent[_address];
 	}
 
 	function getYesVotes(uint _id) public view returns (uint success) {
-		ProposalData storage proposal = _proposals[_id];
+		ProposalData memory proposal = _proposals[_id];
 		return proposal.yesVotes;
 	}
 
 	function getNoVotes(uint _id) public view returns (uint success) {
-		ProposalData storage proposal = _proposals[_id];
+		ProposalData memory proposal = _proposals[_id];
 		return proposal.noVotes;
 	}
 
 	function getAbstains(uint _id) public view returns (uint success) {
-		ProposalData storage proposal = _proposals[_id];
+		ProposalData memory proposal = _proposals[_id];
 		return proposal.abstains;
 	}
 
 	function getMessage(uint _id) public view returns (string memory) {
-		ProposalData storage proposal = _proposals[_id];
+		ProposalData memory proposal = _proposals[_id];
 		return proposal.message;
 	}
 
