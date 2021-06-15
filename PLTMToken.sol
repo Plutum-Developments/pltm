@@ -333,17 +333,17 @@ contract PLTMToken{
 	}
 
 	function getAddressVotes(address _address, uint _id) public view returns (uint success) {
-		ProposalData memory proposal = _proposals[_id];
+		ProposalData storage proposal = _proposals[_id];
 		return proposal.votesSpent[_address];
 	}
 
 	function getYesVotes(uint _id) public view returns (uint success) {
-		ProposalData memory proposal = _proposals[_id];
+		ProposalData storage proposal = _proposals[_id];
 		return proposal.yesVotes;
 	}
 
 	function getNoVotes(uint _id) public view returns (uint success) {
-		ProposalData memory proposal = _proposals[_id];
+		ProposalData storage proposal = _proposals[_id];
 		return proposal.noVotes;
 	}
 
@@ -353,7 +353,7 @@ contract PLTMToken{
 	}
 
 	function getMessage(uint _id) public view returns (string memory) {
-		ProposalData memory proposal = _proposals[_id];
+		ProposalData storage proposal = _proposals[_id];
 		return proposal.message;
 	}
 
