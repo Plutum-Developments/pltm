@@ -28,7 +28,7 @@ contract PLTMToken{
 	}
 	
 	//Array of IDs for proposals;
-	uint[] private IDs;
+	uint private IDs = 1;
 	//mapping of IDs to their prespective data
 	mapping(uint => ProposalData) _proposals;
 	
@@ -103,7 +103,7 @@ contract PLTMToken{
 		balances[_to] += _value;
 		balancesVote[msg.sender] -= _value;
 		balancesVote[_to] += _value;
-		for(uint i = 0; i < IDs.length; i++){
+		for(uint i = 0; i < IDs; i++){
 		    changeVotes(balancesVote[msg.sender], i, msg.sender);
 		    changeVotes(balancesVote[_to], i, _to);
 		}
@@ -147,7 +147,7 @@ contract PLTMToken{
 		balancesVote[_from] -= _value;
 		allowancesVote[_from][_to] -= _value;
 		balancesVote[_to] += _value;
-		for(uint i = 0; i < IDs.length; i++){
+		for(uint i = 0; i < IDs; i++){
 		    changeVotes(balancesVote[_from], i, _from);
             changeVotes(balancesVote[_to], i, _to);
 		}
@@ -180,7 +180,7 @@ contract PLTMToken{
 		//Changes how many votes each party gets
 		balancesVote[msg.sender] -= _value;
 		balancesVote[_spender] += _value;
-		for(uint i = 0; i < IDs.length; i++){
+		for(uint i = 0; i < IDs; i++){
 			changeVotes(balancesVote[msg.sender], i, msg.sender);
 			changeVotes(balancesVote[_spender], i, _spender);
 		}
@@ -200,15 +200,12 @@ contract PLTMToken{
 	//Proposal code:
 	
 	//Create a new proposal
-	function newProposal(string memory _proposal) public {
-
-		//add a new ID;
-		uint _id = IDs.length;
-		IDs.push(_id);
+	function newProposal(string memory _msg) public {
 
 		//Defines proposal for said id
-		ProposalData storage proposal = _proposals[_id];
-		proposal.message = _proposal;
+		ProposalData storage proposal = _proposals[IDs];
+		IDs++;
+		proposal.message = _msg;
 		proposal.deposit = false;
 		proposal.depositVotes = 0;
 		proposal.yesVotes = 0;
@@ -247,6 +244,10 @@ contract PLTMToken{
 	function vote(uint _numVotes, uint _id, uint _decision, address _address) public returns (bool success) {
 		//Grabs proposal of said ID
 		ProposalData storage proposal = _proposals[_id];
+		
+		if(proposal.deposit){
+		    addDepositVotes(_numVotes, _id);
+		} else {
 		//Requires proposal to be active;
 		require(proposal.active);
 		//Requires that the user can spend enough votes.
@@ -269,6 +270,8 @@ contract PLTMToken{
 		proposal.votesSpent[msg.sender] += _numVotes;
 
 		return true;
+		
+		}
 	}
 
 	//Call this function when a user's amount of available votes goes down
@@ -381,7 +384,7 @@ contract PLTMToken{
 	}
 
 	function getTotalIDs() public view returns (uint success) {
-		return IDs.length;
+		return IDs;
 	}
 
 	function getTimeLeft(uint _id) public view returns (uint success) {
@@ -391,6 +394,11 @@ contract PLTMToken{
 		} else {
 			return 0;
 		}
+	}
+	
+	function getDeposit(uint _id) public view returns (bool success) {
+	    ProposalData memory proposal = _proposals[_id];
+		return proposal.deposit;
 	}
 
 }
